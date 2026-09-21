@@ -9,3 +9,17 @@ export async function loadBool(key: string, fallback:boolean): Promise<boolean> 
 export async function saveBool(key:string, value: boolean): Promise<void> {
     await AsyncStorage.setItem(key, String(value));
 }
+
+export async function loadJSON<T>(key: string, fallback: T): Promise<T> {
+    const raw = await AsyncStorage.getItem(key);
+    if (raw === null) return fallback;
+    try {
+        return JSON.parse(raw) as T;
+    } catch {
+        return fallback;
+    }
+}
+
+export async function saveJSON<T>(key: string, value: T): Promise<void> {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+}

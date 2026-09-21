@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { addSession, loadSessions } from '../data/sessions';
+import { todayKey } from '../domain/date';
+import type { Phase, Session } from '../domain/types';
 import { useAppTheme } from '../theme/ThemeContext';
 
 const FOCUS_SECONDS = 25 * 60;
@@ -13,17 +16,24 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 const TICK_MS = 200;
 
-type Phase = 'focus' | 'break';
-
 export function TimerScreen() {
   const { colors } = useAppTheme();
 
   const [phase, setPhase] = useState<Phase>('focus');
   const [remaining, setRemaining] = useState(FOCUS_SECONDS);
   const [running, setRunning] = useState(false);
+  const [todayCount, setTodayCount] = useState(0);
 
   // Wall-clock deadline (ms since epoch). A ref, not state: it is never rendered.
   const deadlineRef = useRef(0);
+
+  // Load today's session count once, on mount.
+  useEffect(() => {
+    loadSessions().then((all) => {
+      const today = todayKey();
+      setTodayCount(all.filter((s) => s.date === today).length);
+    });
+  }, []);
 
   // Tick often, but always RECOMPUTE from the clock — never count ticks.
   useEffect(() => {
@@ -37,9 +47,20 @@ export function TimerScreen() {
     return () => clearInterval(id);
   }, [running]);
 
-  // Zero → swap phase, reload the clock, re-arm the deadline so it keeps running.
+  // Zero → record a finished focus run, then swap phase and re-arm the clock.
   useEffect(() => {
     if (remaining > 0) return;
+
+    if (phase === 'focus') {
+      const session: Session = {
+        date: todayKey(),
+        phase: 'focus',
+        seconds: FOCUS_SECONDS,
+        completedAt: deadlineRef.current,
+        skipped: false,
+      };
+      addSession(session).then(() => setTodayCount((prev) => prev + 1));
+    }
 
     const nextPhase: Phase = phase === 'focus' ? 'break' : 'focus';
     const nextSeconds = nextPhase === 'focus' ? FOCUS_SECONDS : BREAK_SECONDS;
@@ -79,6 +100,10 @@ export function TimerScreen() {
     <View style={styles.container}>
       <Text style={[styles.phaseLabel, { color: colors.inkSoft }]}>
         {phase === 'focus' ? 'FOCUS' : 'BREAK'}
+      </Text>
+
+      <Text style={[styles.sessionCount, { color: colors.inkSoft }]}>
+        {`Today: ${todayCount}`}
       </Text>
 
       <View style={styles.ringWrap}>
@@ -121,6 +146,7 @@ export function TimerScreen() {
 const styles = StyleSheet.create({
   container: { alignItems: 'center', gap: 24 },
   phaseLabel: { fontSize: 16, fontWeight: '600', letterSpacing: 4 },
+  sessionCount: { fontSize: 14 },
   ringWrap: { width: RING_SIZE, height: RING_SIZE },
   ringCenter: {
     ...StyleSheet.absoluteFill,

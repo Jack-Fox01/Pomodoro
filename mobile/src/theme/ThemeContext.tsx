@@ -1,7 +1,7 @@
 import { Palette, lightPalette, darkPalette, retroPalette } from "./palettes";
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from "react";
-import { loadBool, saveBool } from "./storage/storage"; 
+import { loadBool, saveBool } from "../storage/storage";
 
 type ThemeValue = {
     colors: Palette;

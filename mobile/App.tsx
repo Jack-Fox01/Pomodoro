@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Button } from 'react-native';
 import { ThemeProvider, useAppTheme } from './src/theme/ThemeContext';
-import { TimerScreen } from './src/theme/screens/TimerScreen';
+import { TimerScreen } from './src/screens/TimerScreen';
 
 
 function Home() {

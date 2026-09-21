@@ -11,7 +11,7 @@ A gamified Pomodoro timer. Focus in sessions, take breaks, and build a habit —
 - **Session tracking** — rate each completed session (😞 / 😐 / 🙂 / 🤩) and see it on a monthly calendar with a colour-coded quality dot.
 - **Streaks** — consecutive days with logged sessions, with milestones and confetti.
 - **Notes & to-dos** — a draggable, reorderable to-do list plus a freeform notes area, and per-day notes on the calendar.
-- **Avatar profile** — pick an emoji character; it levels up (XP) as you complete sessions.
+- **Avatar profile** — pick a character; it levels up (XP) as you complete sessions.
 - **Themes** — Dark mode and a Retro (32-bit) mode.
 - **Sounds & effects** — Web Audio chimes, fanfares, and confetti (no assets needed).
 

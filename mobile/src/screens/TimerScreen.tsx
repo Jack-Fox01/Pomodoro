@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { BreakOverlay } from '../components/BreakOverlay';
 import { addSession, loadSessions } from '../data/sessions';
 import { todayKey } from '../domain/date';
+import { formatClock } from '../domain/time';
 import type { Phase, Session } from '../domain/types';
 import { useAppTheme } from '../theme/ThemeContext';
 
-const FOCUS_SECONDS = 25 * 60;
-const BREAK_SECONDS = 5 * 60;
+const FOCUS_SECONDS = 10; // 25 * 60
+const BREAK_SECONDS = 15; // 5 * 60
 
 const RING_SIZE = 260;
 const RING_STROKE = 16;
@@ -27,11 +29,11 @@ export function TimerScreen() {
   // Wall-clock deadline (ms since epoch). A ref, not state: it is never rendered.
   const deadlineRef = useRef(0);
 
-  // Load today's session count once, on mount.
+  // Load today's focus count once, on mount.
   useEffect(() => {
     loadSessions().then((all) => {
       const today = todayKey();
-      setTodayCount(all.filter((s) => s.date === today).length);
+      setTodayCount(all.filter((s) => s.date === today && s.phase === 'focus').length);
     });
   }, []);
 
@@ -47,7 +49,7 @@ export function TimerScreen() {
     return () => clearInterval(id);
   }, [running]);
 
-  // Zero → record a finished focus run, then swap phase and re-arm the clock.
+  // Zero → record a finished focus run, start the break, or end the break.
   useEffect(() => {
     if (remaining > 0) return;
 
@@ -60,14 +62,15 @@ export function TimerScreen() {
         skipped: false,
       };
       addSession(session).then(() => setTodayCount((prev) => prev + 1));
+
+      setPhase('break');
+      setRemaining(BREAK_SECONDS);
+      deadlineRef.current = Date.now() + BREAK_SECONDS * 1000;
+    } else {
+      setPhase('focus');
+      setRemaining(FOCUS_SECONDS);
+      setRunning(false);
     }
-
-    const nextPhase: Phase = phase === 'focus' ? 'break' : 'focus';
-    const nextSeconds = nextPhase === 'focus' ? FOCUS_SECONDS : BREAK_SECONDS;
-
-    setPhase(nextPhase);
-    setRemaining(nextSeconds);
-    deadlineRef.current = Date.now() + nextSeconds * 1000;
   }, [remaining, phase]);
 
   function toggleRunning() {
@@ -85,10 +88,24 @@ export function TimerScreen() {
     setRemaining(FOCUS_SECONDS);
   }
 
+  /** The user confirmed ending the break early. Log it as skipped, then reset to focus. */
+  function endBreak() {
+    const session: Session = {
+      date: todayKey(),
+      phase: 'break',
+      seconds: BREAK_SECONDS - remaining,
+      completedAt: Date.now(),
+      skipped: true,
+    };
+    addSession(session);
+
+    setRunning(false);
+    setPhase('focus');
+    setRemaining(FOCUS_SECONDS);
+  }
+
   // Derived — not state.
-  const minutes = Math.floor(remaining / 60);
-  const seconds = remaining % 60;
-  const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  const display = formatClock(remaining);
 
   const total = phase === 'focus' ? FOCUS_SECONDS : BREAK_SECONDS;
   const progress = remaining / total;
@@ -103,7 +120,7 @@ export function TimerScreen() {
       </Text>
 
       <Text style={[styles.sessionCount, { color: colors.inkSoft }]}>
-        {`Today: ${todayCount}`}
+        {`Focus today: ${todayCount}`}
       </Text>
 
       <View style={styles.ringWrap}>
@@ -139,6 +156,12 @@ export function TimerScreen() {
         <Button title={running ? 'Pause' : 'Start'} onPress={toggleRunning} />
         <Button title="Reset" onPress={reset} />
       </View>
+
+      <BreakOverlay
+        visible={phase === 'break'}
+        secondsLeft={remaining}
+        onEndBreak={endBreak}
+      />
     </View>
   );
 }

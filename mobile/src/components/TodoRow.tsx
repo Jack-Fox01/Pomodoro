@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import type { Todo } from '../domain/types';
 import { useAppTheme } from '../theme/ThemeContext';
 
@@ -17,7 +16,7 @@ type TodoRowProps = {
 };
 
 export function TodoRow({ todo, index, onVanish, onRemove, onReorder }: TodoRowProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
 
   const [dragging, setDragging] = useState(false);
   const vanish = useRef(new Animated.Value(0)).current;
@@ -50,7 +49,6 @@ export function TodoRow({ todo, index, onVanish, onRemove, onReorder }: TodoRowP
   ).current;
 
   function complete() {
-    playSound('swoosh');
     Animated.timing(vanish, {
       toValue: 1,
       duration: 260,
@@ -80,7 +78,7 @@ export function TodoRow({ todo, index, onVanish, onRemove, onReorder }: TodoRowP
           },
           dragging && {
             backgroundColor: colors.chipBg,
-            borderRadius: retro ? 2 : 10,
+            borderRadius: 10,
             zIndex: 10,
             elevation: 6,
           },
@@ -95,7 +93,7 @@ export function TodoRow({ todo, index, onVanish, onRemove, onReorder }: TodoRowP
           onPress={complete}
           style={[
             styles.check,
-            { borderColor: colors.line, borderRadius: retro ? 2 : 7 },
+            { borderColor: colors.line, borderRadius: 7 },
           ]}
         />
 
@@ -106,7 +104,6 @@ export function TodoRow({ todo, index, onVanish, onRemove, onReorder }: TodoRowP
         <Pressable
           accessibilityLabel="Delete task"
           onPress={() => {
-            playSound('clear');
             onRemove(todo.id);
           }}
           style={styles.delete}

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'; //API?
-import { playSound } from '../audio/sounds';
 import { formatClock } from '../domain/time';
 import { useAppTheme } from '../theme/ThemeContext';
 
@@ -56,7 +55,6 @@ export function BreakOverlay({ visible, secondsLeft, onEndBreak }: BreakOverlayP
               <Text style={styles.body}>Step away from your phone and rest. 🌱</Text>
               <Pressable
               onPress={() => {
-                playSound('click');
                 setConfirming(true);
               }} 
               style={({ pressed }) => [
@@ -76,7 +74,6 @@ export function BreakOverlay({ visible, secondsLeft, onEndBreak }: BreakOverlayP
                 <Text style={styles.body}>End your break early?</Text>
 
                 <Pressable onPress={() => {
-                  playSound('clear');
                   onEndBreak();
                 }}
                 style={({pressed}) => [
@@ -90,7 +87,6 @@ export function BreakOverlay({ visible, secondsLeft, onEndBreak }: BreakOverlayP
 
                 <Pressable
                   onPress={() => {
-                    playSound('click');
                     setConfirming(false);
                   }}
                     style={({ pressed }) => [

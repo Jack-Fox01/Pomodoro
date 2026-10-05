@@ -7,7 +7,6 @@ export const DEFAULT_SETTINGS: Settings = {
   focusMinutes: 25,
   breakMinutes: 5,
   challenge: 'random',
-  soundOn: true,
 };
 
 /** Merged over the defaults, so settings stored before a field existed still load. */

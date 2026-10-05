@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import { useAppTheme } from '../theme/ThemeContext';
 
 type ToggleSwitchProps = {
@@ -11,7 +10,7 @@ type ToggleSwitchProps = {
 };
 
 export function ToggleSwitch({ label, value, onChange }: ToggleSwitchProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   const slide = useRef(new Animated.Value(value ? 1 : 0)).current;
 
   useEffect(() => {
@@ -32,21 +31,20 @@ export function ToggleSwitch({ label, value, onChange }: ToggleSwitchProps) {
         accessibilityRole="switch"
         accessibilityState={{ checked: value }}
         onPress={() => {
-          playSound('click');
           onChange(!value);
         }}
         style={[
           styles.track,
           {
             backgroundColor: value ? colors.focus : colors.chipBg,
-            borderRadius: retro ? 2 : 999,
+            borderRadius: 999,
           },
         ]}
       >
         <Animated.View
           style={[
             styles.knob,
-            { transform: [{ translateX }], borderRadius: retro ? 2 : 999 },
+            { transform: [{ translateX }], borderRadius: 999 },
           ]}
         />
       </Pressable>

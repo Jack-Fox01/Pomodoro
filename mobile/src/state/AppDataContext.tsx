@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-import { initAudio, setSoundEnabled } from '../audio/sounds';
 import { loadDayNotes, saveDayNotes } from '../data/dayNotes';
 import type { DayNotes } from '../data/dayNotes';
 import { loadNotes, saveNotes } from '../data/notes';
@@ -33,7 +32,6 @@ type AppDataValue = {
   setFocusMinutes: (minutes: number) => void;
   setBreakMinutes: (minutes: number) => void;
   setChallenge: (challenge: ChallengeType) => void;
-  setSoundOn: (on: boolean) => void;
 };
 
 const AppDataContext = createContext<AppDataValue | null>(null);
@@ -148,24 +146,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setSettings(next);
         void saveSettings(next);
       },
-      setSoundOn: (on) => {
-        const next = { ...settings, soundOn: on };
-        setSettings(next);
-        void saveSettings(next);
-      },
     }),
     [ready, sessions, todos, notes, dayNotes, settings]
   );
-
-  // Keep the audio module in step with the setting, and prepare the audio
-  // session once so the first tap is not silent.
-  useEffect(() => {
-    setSoundEnabled(settings.soundOn);
-  }, [settings.soundOn]);
-
-  useEffect(() => {
-    void initAudio();
-  }, []);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }

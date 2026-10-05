@@ -9,9 +9,9 @@ type CardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-/** The rounded panel everything sits in. Retro swaps soft for blocky. */
+/** The rounded panel everything sits in. */
 export function Card({ children, style }: CardProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
 
   return (
     <View
@@ -20,8 +20,8 @@ export function Card({ children, style }: CardProps) {
         {
           backgroundColor: colors.card,
           borderColor: colors.line,
-          borderWidth: retro ? 2 : 1,
-          borderRadius: retro ? 2 : 26,
+          borderWidth: 1,
+          borderRadius: 26,
           padding: 26,
         },
         style,

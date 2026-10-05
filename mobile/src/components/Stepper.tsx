@@ -23,7 +23,7 @@ export function Stepper({
   unit = 'min',
   onChange,
 }: StepperProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   const [text, setText] = useState(String(value));
 
   // Sync when the value changes from outside the field (+/−, presets).
@@ -46,7 +46,7 @@ export function Stepper({
     onChange(Math.max(min, Math.min(max, value + delta)));
   }
 
-  const controlRadius = retro ? 2 : 10;
+  const controlRadius = 10;
 
   return (
     <View
@@ -55,8 +55,8 @@ export function Stepper({
         {
           backgroundColor: colors.settingBg,
           borderColor: colors.line,
-          borderRadius: retro ? 2 : 16,
-          borderWidth: retro ? 2 : 1,
+          borderRadius: 16,
+          borderWidth: 1,
         },
       ]}
     >

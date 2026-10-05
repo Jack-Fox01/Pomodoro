@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import { useAppTheme } from '../theme/ThemeContext';
 
 export type TabKey = 'timer' | 'calendar' | 'notes' | 'profile';
@@ -19,7 +18,7 @@ type TabBarProps = {
 
 /** The floating pill along the bottom. */
 export function TabBar({ active, onChange }: TabBarProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
 
   return (
     <View
@@ -28,8 +27,8 @@ export function TabBar({ active, onChange }: TabBarProps) {
         {
           backgroundColor: colors.card,
           borderColor: colors.line,
-          borderWidth: retro ? 2 : 1,
-          borderRadius: retro ? 2 : 999,
+          borderWidth: 1,
+          borderRadius: 999,
         },
       ]}
     >
@@ -41,14 +40,13 @@ export function TabBar({ active, onChange }: TabBarProps) {
             accessibilityRole="button"
             accessibilityState={{ selected: isActive }}
             onPress={() => {
-              playSound('click');
               onChange(tab.key);
             }}
             style={[
               styles.tab,
               {
                 backgroundColor: isActive ? colors.chipBg : 'transparent',
-                borderRadius: retro ? 2 : 999,
+                borderRadius: 999,
               },
             ]}
           >

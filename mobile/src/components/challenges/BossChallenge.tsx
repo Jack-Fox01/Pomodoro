@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../../audio/sounds';
 import { useAppTheme } from '../../theme/ThemeContext';
 
 const MAX_HP = 15;
@@ -17,7 +16,7 @@ type BossChallengeProps = {
 };
 
 export function BossChallenge({ onComplete }: BossChallengeProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   const [hp, setHp] = useState(MAX_HP);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -31,7 +30,6 @@ export function BossChallenge({ onComplete }: BossChallengeProps) {
   function attack() {
     if (hp <= 0) return;
 
-    playSound('hit');
     const next = hp - 1;
     setHp(next);
     if (next <= 0) timer.current = setTimeout(onComplete, 450);
@@ -45,14 +43,14 @@ export function BossChallenge({ onComplete }: BossChallengeProps) {
         BOSS HP {hp} / {MAX_HP}
       </Text>
 
-      <View style={[styles.hpTrack, { backgroundColor: colors.ringTrack, borderRadius: retro ? 2 : 999 }]}>
+      <View style={[styles.hpTrack, { backgroundColor: colors.ringTrack, borderRadius: 999 }]}>
         <View
           style={[
             styles.hpFill,
             {
               width: `${(hp / MAX_HP) * 100}%`,
               backgroundColor: hpColor(hp),
-              borderRadius: retro ? 2 : 999,
+              borderRadius: 999,
             },
           ]}
         />

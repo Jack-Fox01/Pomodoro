@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../../audio/sounds';
 import { shuffle } from '../../domain/random';
 import { useAppTheme } from '../../theme/ThemeContext';
 
@@ -28,7 +27,7 @@ type TilesChallengeProps = {
 };
 
 export function TilesChallenge({ onComplete }: TilesChallengeProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
 
   const [tiles, setTiles] = useState<Tile[]>(buildTiles);
 
@@ -49,7 +48,6 @@ export function TilesChallenge({ onComplete }: TilesChallengeProps) {
     const tile = tiles[index];
     if (tile.flipped || tile.matched) return;
 
-    playSound('tap');
 
     const opened = tiles.map((t, i) => (i === index ? { ...t, flipped: true } : t));
 
@@ -63,7 +61,6 @@ export function TilesChallenge({ onComplete }: TilesChallengeProps) {
     firstIndex.current = null;
 
     if (opened[first].emoji === opened[index].emoji) {
-      playSound('ding');
       const matched = opened.map((t, i) =>
         i === first || i === index ? { ...t, matched: true } : t
       );
@@ -98,7 +95,7 @@ export function TilesChallenge({ onComplete }: TilesChallengeProps) {
               styles.tile,
               {
                 backgroundColor: tile.matched ? colors.breakColor : colors.chipBg,
-                borderRadius: retro ? 2 : 14,
+                borderRadius: 14,
               },
             ]}
           >

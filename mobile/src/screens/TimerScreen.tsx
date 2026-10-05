@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import { BreakOverlay } from '../components/BreakOverlay';
 import { Card } from '../components/Card';import { Confetti } from '../components/Confetti';
 import { ModePill } from '../components/ModePill';
@@ -36,7 +35,7 @@ const PRESETS = [
 ];
 
 export function TimerScreen() {
-  const { colors, retro, dark, toggleDark, toggleRetro } = useAppTheme();
+  const { colors, dark, toggleDark } = useAppTheme();
   const {
     sessions,
     addSession,
@@ -44,7 +43,6 @@ export function TimerScreen() {
     setFocusMinutes,
     setBreakMinutes,
     setChallenge,
-    setSoundOn,
   } = useAppData();
 
   const focusSeconds = settings.focusMinutes * 60;
@@ -88,7 +86,6 @@ export function TimerScreen() {
     if (remaining > 0) return;
 
     if (phase === 'focus') {
-      playSound('chime');
       pendingRef.current = { seconds: focusSeconds, skipped: false };
       setPhase('break');
       setRemaining(breakSeconds);
@@ -198,7 +195,6 @@ export function TimerScreen() {
 
     if (beatChallenge || extendedStreak) {
       setCelebrating(true);
-      playSound('triumph');
     }
 
     if (extendedStreak) setToast(`🔥 ${streakAfter}-day streak!`);
@@ -242,12 +238,11 @@ export function TimerScreen() {
           <View style={styles.controls}>
             <Pressable
               onPress={() => {
-                playSound('click');
                 reset();
               }}
               style={[
                 styles.ghost,
-                { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },
+                { backgroundColor: colors.chipBg, borderRadius: 999 },
               ]}
             >
               <Text style={[styles.ghostLabel, { color: colors.ink }]}>Reset</Text>
@@ -255,10 +250,9 @@ export function TimerScreen() {
 
             <Pressable
               onPress={() => {
-                playSound('tap');
                 toggleRunning();
               }}
-              style={[styles.primary, { backgroundColor: accent, borderRadius: retro ? 2 : 999 }]}
+              style={[styles.primary, { backgroundColor: accent, borderRadius: 999 }]}
             >
               <Text style={styles.primaryLabel}>{running ? 'Pause' : 'Start'}</Text>
             </Pressable>
@@ -266,12 +260,11 @@ export function TimerScreen() {
             {phase === 'focus' && (
               <Pressable
                 onPress={() => {
-                  playSound('click');
                   openChallenge();
                 }}
                 style={[
                   styles.ghost,
-                  { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },
+                  { backgroundColor: colors.chipBg, borderRadius: 999 },
                 ]}
               >
                 <Text style={[styles.ghostLabel, { color: colors.ink }]}>Skip</Text>
@@ -304,8 +297,8 @@ export function TimerScreen() {
                 {
                   backgroundColor: colors.settingBg,
                   borderColor: colors.line,
-                  borderWidth: retro ? 2 : 1,
-                  borderRadius: retro ? 2 : 16,
+                  borderWidth: 1,
+                  borderRadius: 16,
                 },
               ]}
             >
@@ -323,14 +316,13 @@ export function TimerScreen() {
                     <Pressable
                       key={option.value}
                       onPress={() => {
-                        playSound('click');
                         setChallenge(option.value);
                       }}
                       style={[
                         styles.challengeOption,
                         {
                           backgroundColor: isActive ? colors.focusDeep : colors.chipBg,
-                          borderRadius: retro ? 2 : 12,
+                          borderRadius: 12,
                         },
                       ]}
                     >
@@ -354,8 +346,8 @@ export function TimerScreen() {
                 {
                   backgroundColor: colors.settingBg,
                   borderColor: colors.line,
-                  borderWidth: retro ? 2 : 1,
-                  borderRadius: retro ? 2 : 16,
+                  borderWidth: 1,
+                  borderRadius: 16,
                 },
               ]}
             >
@@ -367,12 +359,6 @@ export function TimerScreen() {
               </View>
 
               <ToggleSwitch label="Dark mode" value={dark} onChange={toggleDark} />
-              <ToggleSwitch label="Retro (32-bit)" value={retro} onChange={toggleRetro} />
-              <ToggleSwitch
-                label="Sound effects"
-                value={settings.soundOn}
-                onChange={setSoundOn}
-              />
             </View>
 
             <View style={styles.presets}>
@@ -383,14 +369,13 @@ export function TimerScreen() {
                   <Pressable
                     key={preset.label}
                     onPress={() => {
-                      playSound('click');
                       applyPreset(preset.focus, preset.rest);
                     }}
                     style={[
                       styles.preset,
                       {
                         backgroundColor: isActive ? colors.focusDeep : colors.chipBg,
-                        borderRadius: retro ? 2 : 999,
+                        borderRadius: 999,
                       },
                     ]}
                   >

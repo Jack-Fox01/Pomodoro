@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import { pickQuote } from '../domain/quotes';
 import { RATING_OPTIONS } from '../domain/rating';
 import type { Rating } from '../domain/types';
@@ -14,7 +13,7 @@ type RatingModalProps = {
 };
 
 export function RatingModal({ title, onPick, onSkip }: RatingModalProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   // Lazy initialiser: one fresh quote per opening, not one per render.
   const [quote] = useState(pickQuote);
 
@@ -27,8 +26,8 @@ export function RatingModal({ title, onPick, onSkip }: RatingModalProps) {
             {
               backgroundColor: colors.card,
               borderColor: colors.line,
-              borderWidth: retro ? 2 : 1,
-              borderRadius: retro ? 2 : 22,
+              borderWidth: 1,
+              borderRadius: 22,
             },
           ]}
         >
@@ -40,12 +39,11 @@ export function RatingModal({ title, onPick, onSkip }: RatingModalProps) {
               <Pressable
                 key={option.value}
                 onPress={() => {
-                  playSound('ding');
                   onPick(option.value);
                 }}
                 style={[
                   styles.option,
-                  { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 16 },
+                  { backgroundColor: colors.chipBg, borderRadius: 16 },
                 ]}
               >
                 <Text style={styles.emoji}>{option.emoji}</Text>
@@ -55,7 +53,6 @@ export function RatingModal({ title, onPick, onSkip }: RatingModalProps) {
 
           <Pressable
             onPress={() => {
-              playSound('click');
               onSkip();
             }}
             style={styles.skip}

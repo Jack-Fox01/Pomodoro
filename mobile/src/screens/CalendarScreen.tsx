@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import { Card } from '../components/Card';
 import {
   WEEKDAY_LABELS,
@@ -34,7 +33,7 @@ const LEGEND = [
 ];
 
 export function CalendarScreen() {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   const { sessions, addSession, dayNotes, setDayNote } = useAppData();
 
   const now = new Date();
@@ -58,14 +57,12 @@ export function CalendarScreen() {
   const savedNote = dayNotes[selected] ?? '';
 
   function shiftMonth(delta: number) {
-    playSound('click');
     const next = new Date(year, month + delta, 1);
     setYear(next.getFullYear());
     setMonth(next.getMonth());
   }
 
   function logForSelectedDay(rating: Rating) {
-    playSound('ding');
     const session: Session = {
       date: selected,
       phase: 'focus',
@@ -102,7 +99,7 @@ export function CalendarScreen() {
             onPress={() => shiftMonth(-1)}
             style={[
               styles.calNav,
-              { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 10 },
+              { backgroundColor: colors.chipBg, borderRadius: 10 },
             ]}
           >
             <Text style={[styles.calNavLabel, { color: colors.ink }]}>‹</Text>
@@ -117,7 +114,7 @@ export function CalendarScreen() {
             onPress={() => shiftMonth(1)}
             style={[
               styles.calNav,
-              { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 10 },
+              { backgroundColor: colors.chipBg, borderRadius: 10 },
             ]}
           >
             <Text style={[styles.calNavLabel, { color: colors.ink }]}>›</Text>
@@ -144,12 +141,11 @@ export function CalendarScreen() {
               <Pressable
                 key={cell.key}
                 onPress={() => {
-                  playSound('tap');
                   setSelected(cell.key);
                 }}
                 style={[
                   styles.calCell,
-                  { borderRadius: retro ? 2 : 10 },
+                  { borderRadius: 10 },
                   isSelected && { backgroundColor: colors.focus },
                   isToday && !isSelected && { borderWidth: 2, borderColor: colors.focus },
                 ]}
@@ -235,7 +231,7 @@ export function CalendarScreen() {
                 onPress={() => logForSelectedDay(choice.value)}
                 style={[
                   styles.ratingOption,
-                  { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 14 },
+                  { backgroundColor: colors.chipBg, borderRadius: 14 },
                 ]}
               >
                 <Text style={styles.ratingEmoji}>{choice.emoji}</Text>
@@ -245,12 +241,11 @@ export function CalendarScreen() {
         ) : (
           <Pressable
             onPress={() => {
-              playSound('click');
               setLogging(true);
             }}
             style={[
               styles.logButton,
-              { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },
+              { backgroundColor: colors.chipBg, borderRadius: 999 },
             ]}
           >
             <Text style={[styles.logLabel, { color: colors.ink }]}>
@@ -272,7 +267,7 @@ export function CalendarScreen() {
               color: colors.ink,
               backgroundColor: colors.settingBg,
               borderColor: colors.line,
-              borderRadius: retro ? 2 : 12,
+              borderRadius: 12,
             },
           ]}
         />

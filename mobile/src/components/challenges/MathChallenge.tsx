@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../../audio/sounds';
 import { genMathQuestion } from '../../domain/math';
 import { useAppTheme } from '../../theme/ThemeContext';
 
@@ -12,14 +11,13 @@ type MathChallengeProps = {
 };
 
 export function MathChallenge({ onComplete }: MathChallengeProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   // No parentheses: React calls the generator once, lazily, for the first render.
   const [question, setQuestion] = useState(genMathQuestion);
   const [correct, setCorrect] = useState(0);
 
   function answer(choice: number) {
     if (choice === question.answer) {
-      playSound('ding');
       const next = correct + 1;
       if (next >= NEEDED) {
         onComplete();
@@ -27,7 +25,6 @@ export function MathChallenge({ onComplete }: MathChallengeProps) {
       }
       setCorrect(next);
     } else {
-      playSound('buzz');
     }
     // Wrong answers deal a new question but never cost progress.
     setQuestion(genMathQuestion());
@@ -56,7 +53,7 @@ export function MathChallenge({ onComplete }: MathChallengeProps) {
             onPress={() => answer(choice)}
             style={({ pressed }) => [
               styles.answer,
-              { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 12 },
+              { backgroundColor: colors.chipBg, borderRadius: 12 },
               pressed && styles.pressed,
             ]}
           >

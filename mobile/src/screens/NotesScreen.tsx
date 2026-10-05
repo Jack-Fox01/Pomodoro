@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import { Card } from '../components/Card';
 import { TodoRow } from '../components/TodoRow';
 import { useAppData } from '../state/AppDataContext';
 import { useAppTheme } from '../theme/ThemeContext';
 
 export function NotesScreen() {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   const { todos, addTodo, removeTodo, reorderTodos, notes, setNotes } = useAppData();
 
   const [draft, setDraft] = useState('');
@@ -16,7 +15,6 @@ export function NotesScreen() {
   function submit() {
     const text = draft.trim();
     if (text.length === 0) return;
-    playSound('ding');
     addTodo(text);
     setDraft('');
   }
@@ -48,7 +46,7 @@ export function NotesScreen() {
                 color: colors.ink,
                 backgroundColor: colors.settingBg,
                 borderColor: colors.line,
-                borderRadius: retro ? 2 : 12,
+                borderRadius: 12,
               },
             ]}
           />
@@ -56,7 +54,7 @@ export function NotesScreen() {
             onPress={submit}
             style={[
               styles.addButton,
-              { backgroundColor: colors.focus, borderRadius: retro ? 2 : 12 },
+              { backgroundColor: colors.focus, borderRadius: 12 },
             ]}
           >
             <Text style={styles.addLabel}>Add</Text>
@@ -98,7 +96,7 @@ export function NotesScreen() {
               color: colors.ink,
               backgroundColor: colors.settingBg,
               borderColor: colors.line,
-              borderRadius: retro ? 2 : 12,
+              borderRadius: 12,
             },
           ]}
         />

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { playSound } from '../audio/sounds';
 import { useAppTheme } from '../theme/ThemeContext';
 
 type ChallengeModalProps = {
@@ -16,7 +15,7 @@ type ChallengeModalProps = {
  * is hosting — that is what `children` is for.
  */
 export function ChallengeModal({ title, hint, onCancel, children }: ChallengeModalProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onCancel}>
@@ -27,8 +26,8 @@ export function ChallengeModal({ title, hint, onCancel, children }: ChallengeMod
             {
               backgroundColor: colors.card,
               borderColor: colors.line,
-              borderWidth: retro ? 2 : 1,
-              borderRadius: retro ? 2 : 22,
+              borderWidth: 1,
+              borderRadius: 22,
             },
           ]}
         >
@@ -39,7 +38,6 @@ export function ChallengeModal({ title, hint, onCancel, children }: ChallengeMod
 
           <Pressable
             onPress={() => {
-              playSound('click');
               onCancel();
             }}
             style={styles.cancel}

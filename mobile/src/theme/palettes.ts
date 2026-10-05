@@ -42,18 +42,3 @@ export const darkPalette: Palette = {
     settingBg: '#262a38',
     chipBg: '#2a2f40',
 }
-
-export const retroPalette: Palette = {
-    focus: '#ff5252',
-    focusDeep: '#b71c1c',
-    breakColor: '#3ddc97',
-    breakDeep: '#157a5c',
-    pageBg: '#12141d',
-    card: '#20232f',
-    line: '#3a3f56',
-    ink: '#f0f2ff',
-    inkSoft: '#98a0c4',
-    ringTrack: '#2a2e40',
-    settingBg: '#2a2e40',
-    chipBg: '#2a2e40',
-}

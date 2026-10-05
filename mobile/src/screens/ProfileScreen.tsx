@@ -7,7 +7,7 @@ import { useAppData } from '../state/AppDataContext';
 import { useAppTheme } from '../theme/ThemeContext';
 
 export function ProfileScreen() {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   const { sessions } = useAppData();
 
   const streak = computeStreak(sessionDates(sessions));
@@ -24,8 +24,8 @@ export function ProfileScreen() {
               {
                 backgroundColor: colors.settingBg,
                 borderColor: colors.line,
-                borderWidth: retro ? 2 : 1,
-                borderRadius: retro ? 2 : 14,
+                borderWidth: 1,
+                borderRadius: 14,
               },
             ]}
           >
@@ -39,8 +39,8 @@ export function ProfileScreen() {
               {
                 backgroundColor: colors.settingBg,
                 borderColor: colors.line,
-                borderWidth: retro ? 2 : 1,
-                borderRadius: retro ? 2 : 14,
+                borderWidth: 1,
+                borderRadius: 14,
               },
             ]}
           >

@@ -11,7 +11,7 @@ type ToastProps = {
 
 /** A single line that fades in near the top, waits, then fades out. */
 export function Toast({ message, duration = 2600, onHide }: ToastProps) {
-  const { colors, retro } = useAppTheme();
+  const { colors } = useAppTheme();
   const fade = useRef(new Animated.Value(0)).current;
 
   const onHideRef = useRef(onHide);
@@ -40,8 +40,8 @@ export function Toast({ message, duration = 2600, onHide }: ToastProps) {
           opacity: fade,
           backgroundColor: colors.card,
           borderColor: colors.line,
-          borderRadius: retro ? 2 : 999,
-          borderWidth: retro ? 2 : 1,
+          borderRadius: 999,
+          borderWidth: 1,
         },
       ]}
     >

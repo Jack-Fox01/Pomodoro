@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../../audio/sounds';
 import { shuffle } from '../../domain/random';
 import { useAppTheme } from '../../theme/ThemeContext';
 
@@ -48,6 +49,8 @@ export function TilesChallenge({ onComplete }: TilesChallengeProps) {
     const tile = tiles[index];
     if (tile.flipped || tile.matched) return;
 
+    playSound('tap');
+
     const opened = tiles.map((t, i) => (i === index ? { ...t, flipped: true } : t));
 
     if (firstIndex.current === null) {
@@ -60,6 +63,7 @@ export function TilesChallenge({ onComplete }: TilesChallengeProps) {
     firstIndex.current = null;
 
     if (opened[first].emoji === opened[index].emoji) {
+      playSound('ding');
       const matched = opened.map((t, i) =>
         i === first || i === index ? { ...t, matched: true } : t
       );

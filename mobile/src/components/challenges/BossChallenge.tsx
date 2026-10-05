@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../../audio/sounds';
 import { useAppTheme } from '../../theme/ThemeContext';
 
 const MAX_HP = 15;
@@ -30,6 +31,7 @@ export function BossChallenge({ onComplete }: BossChallengeProps) {
   function attack() {
     if (hp <= 0) return;
 
+    playSound('hit');
     const next = hp - 1;
     setHp(next);
     if (next <= 0) timer.current = setTimeout(onComplete, 450);

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import { BreakOverlay } from '../components/BreakOverlay';
-import { Card } from '../components/Card';
-import { Confetti } from '../components/Confetti';
+import { Card } from '../components/Card';import { Confetti } from '../components/Confetti';
 import { ModePill } from '../components/ModePill';
 import { ProgressRing } from '../components/ProgressRing';
 import { RatingModal } from '../components/RatingModal';
@@ -44,6 +44,7 @@ export function TimerScreen() {
     setFocusMinutes,
     setBreakMinutes,
     setChallenge,
+    setSoundOn,
   } = useAppData();
 
   const focusSeconds = settings.focusMinutes * 60;
@@ -87,6 +88,7 @@ export function TimerScreen() {
     if (remaining > 0) return;
 
     if (phase === 'focus') {
+      playSound('chime');
       pendingRef.current = { seconds: focusSeconds, skipped: false };
       setPhase('break');
       setRemaining(breakSeconds);
@@ -190,10 +192,16 @@ export function TimerScreen() {
     addSession(session);
     setRatingOpen(false);
 
-    if (streakAfter > streakBefore) {
+    // Beating a challenge and extending a streak are both worth a fanfare.
+    const beatChallenge = pending.skipped;
+    const extendedStreak = streakAfter > streakBefore;
+
+    if (beatChallenge || extendedStreak) {
       setCelebrating(true);
-      setToast(`🔥 ${streakAfter}-day streak!`);
+      playSound('triumph');
     }
+
+    if (extendedStreak) setToast(`🔥 ${streakAfter}-day streak!`);
 
     startBreak();
   }
@@ -233,7 +241,10 @@ export function TimerScreen() {
 
           <View style={styles.controls}>
             <Pressable
-              onPress={reset}
+              onPress={() => {
+                playSound('click');
+                reset();
+              }}
               style={[
                 styles.ghost,
                 { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },
@@ -243,7 +254,10 @@ export function TimerScreen() {
             </Pressable>
 
             <Pressable
-              onPress={toggleRunning}
+              onPress={() => {
+                playSound('tap');
+                toggleRunning();
+              }}
               style={[styles.primary, { backgroundColor: accent, borderRadius: retro ? 2 : 999 }]}
             >
               <Text style={styles.primaryLabel}>{running ? 'Pause' : 'Start'}</Text>
@@ -251,7 +265,10 @@ export function TimerScreen() {
 
             {phase === 'focus' && (
               <Pressable
-                onPress={openChallenge}
+                onPress={() => {
+                  playSound('click');
+                  openChallenge();
+                }}
                 style={[
                   styles.ghost,
                   { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },
@@ -305,7 +322,10 @@ export function TimerScreen() {
                   return (
                     <Pressable
                       key={option.value}
-                      onPress={() => setChallenge(option.value)}
+                      onPress={() => {
+                        playSound('click');
+                        setChallenge(option.value);
+                      }}
                       style={[
                         styles.challengeOption,
                         {
@@ -348,6 +368,11 @@ export function TimerScreen() {
 
               <ToggleSwitch label="Dark mode" value={dark} onChange={toggleDark} />
               <ToggleSwitch label="Retro (32-bit)" value={retro} onChange={toggleRetro} />
+              <ToggleSwitch
+                label="Sound effects"
+                value={settings.soundOn}
+                onChange={setSoundOn}
+              />
             </View>
 
             <View style={styles.presets}>
@@ -357,7 +382,10 @@ export function TimerScreen() {
                 return (
                   <Pressable
                     key={preset.label}
-                    onPress={() => applyPreset(preset.focus, preset.rest)}
+                    onPress={() => {
+                      playSound('click');
+                      applyPreset(preset.focus, preset.rest);
+                    }}
                     style={[
                       styles.preset,
                       {

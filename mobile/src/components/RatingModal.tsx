@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import { pickQuote } from '../domain/quotes';
 import { RATING_OPTIONS } from '../domain/rating';
 import type { Rating } from '../domain/types';
@@ -38,7 +39,10 @@ export function RatingModal({ title, onPick, onSkip }: RatingModalProps) {
             {RATING_OPTIONS.map((option) => (
               <Pressable
                 key={option.value}
-                onPress={() => onPick(option.value)}
+                onPress={() => {
+                  playSound('ding');
+                  onPick(option.value);
+                }}
                 style={[
                   styles.option,
                   { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 16 },
@@ -49,7 +53,13 @@ export function RatingModal({ title, onPick, onSkip }: RatingModalProps) {
             ))}
           </View>
 
-          <Pressable onPress={onSkip} style={styles.skip}>
+          <Pressable
+            onPress={() => {
+              playSound('click');
+              onSkip();
+            }}
+            style={styles.skip}
+          >
             <Text style={[styles.skipLabel, { color: colors.inkSoft }]}>Skip</Text>
           </Pressable>
         </View>

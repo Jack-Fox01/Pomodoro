@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import { useAppTheme } from '../theme/ThemeContext';
 
 type ChallengeModalProps = {
@@ -36,7 +37,13 @@ export function ChallengeModal({ title, hint, onCancel, children }: ChallengeMod
 
           {children}
 
-          <Pressable onPress={onCancel} style={styles.cancel}>
+          <Pressable
+            onPress={() => {
+              playSound('click');
+              onCancel();
+            }}
+            style={styles.cancel}
+          >
             <Text style={[styles.cancelLabel, { color: colors.inkSoft }]}>
               Cancel — keep working
             </Text>

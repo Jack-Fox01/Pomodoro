@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'; //API?
+import { playSound } from '../audio/sounds';
 import { formatClock } from '../domain/time';
 import { useAppTheme } from '../theme/ThemeContext';
 
@@ -54,7 +55,10 @@ export function BreakOverlay({ visible, secondsLeft, onEndBreak }: BreakOverlayP
               <Text style={[styles.clock, {color: colors.breakColor}]}>{formatClock(secondsLeft)}</Text>
               <Text style={styles.body}>Step away from your phone and rest. 🌱</Text>
               <Pressable
-              onPress={() => setConfirming(true)} 
+              onPress={() => {
+                playSound('click');
+                setConfirming(true);
+              }} 
               style={({ pressed }) => [
               styles.primary,
               {backgroundColor: colors.breakColor},
@@ -71,7 +75,10 @@ export function BreakOverlay({ visible, secondsLeft, onEndBreak }: BreakOverlayP
                 <>
                 <Text style={styles.body}>End your break early?</Text>
 
-                <Pressable onPress={onEndBreak}
+                <Pressable onPress={() => {
+                  playSound('clear');
+                  onEndBreak();
+                }}
                 style={({pressed}) => [
                   styles.primary,
                   {backgroundColor: colors.breakColor},
@@ -82,7 +89,10 @@ export function BreakOverlay({ visible, secondsLeft, onEndBreak }: BreakOverlayP
                 </Pressable>
 
                 <Pressable
-                  onPress={() => setConfirming(false)}
+                  onPress={() => {
+                    playSound('click');
+                    setConfirming(false);
+                  }}
                     style={({ pressed }) => [
                    styles.primary,
                     pressed && styles.primaryPressed,

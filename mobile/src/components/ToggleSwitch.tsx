@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import { useAppTheme } from '../theme/ThemeContext';
 
 type ToggleSwitchProps = {
@@ -30,7 +31,10 @@ export function ToggleSwitch({ label, value, onChange }: ToggleSwitchProps) {
       <Pressable
         accessibilityRole="switch"
         accessibilityState={{ checked: value }}
-        onPress={() => onChange(!value)}
+        onPress={() => {
+          playSound('click');
+          onChange(!value);
+        }}
         style={[
           styles.track,
           {

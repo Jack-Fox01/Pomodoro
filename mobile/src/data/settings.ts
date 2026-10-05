@@ -7,10 +7,13 @@ export const DEFAULT_SETTINGS: Settings = {
   focusMinutes: 25,
   breakMinutes: 5,
   challenge: 'random',
+  soundOn: true,
 };
 
+/** Merged over the defaults, so settings stored before a field existed still load. */
 export async function loadSettings(): Promise<Settings> {
-  return loadJSON<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS);
+  const saved = await loadJSON<Partial<Settings>>(SETTINGS_KEY, {});
+  return { ...DEFAULT_SETTINGS, ...saved };
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {

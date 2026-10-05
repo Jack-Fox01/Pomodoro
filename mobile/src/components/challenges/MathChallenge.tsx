@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../../audio/sounds';
 import { genMathQuestion } from '../../domain/math';
 import { useAppTheme } from '../../theme/ThemeContext';
 
@@ -18,12 +19,15 @@ export function MathChallenge({ onComplete }: MathChallengeProps) {
 
   function answer(choice: number) {
     if (choice === question.answer) {
+      playSound('ding');
       const next = correct + 1;
       if (next >= NEEDED) {
         onComplete();
         return;
       }
       setCorrect(next);
+    } else {
+      playSound('buzz');
     }
     // Wrong answers deal a new question but never cost progress.
     setQuestion(genMathQuestion());

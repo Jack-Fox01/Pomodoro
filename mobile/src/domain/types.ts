@@ -24,4 +24,5 @@ export type Settings = {
   focusMinutes: number;
   breakMinutes: number;
   challenge: ChallengeType;
+  soundOn: boolean;
 };

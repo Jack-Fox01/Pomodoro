@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import type { Todo } from '../domain/types';
 import { useAppTheme } from '../theme/ThemeContext';
 
@@ -49,6 +50,7 @@ export function TodoRow({ todo, index, onVanish, onRemove, onReorder }: TodoRowP
   ).current;
 
   function complete() {
+    playSound('swoosh');
     Animated.timing(vanish, {
       toValue: 1,
       duration: 260,
@@ -103,7 +105,10 @@ export function TodoRow({ todo, index, onVanish, onRemove, onReorder }: TodoRowP
 
         <Pressable
           accessibilityLabel="Delete task"
-          onPress={() => onRemove(todo.id)}
+          onPress={() => {
+            playSound('clear');
+            onRemove(todo.id);
+          }}
           style={styles.delete}
         >
           <Text style={[styles.deleteLabel, { color: colors.inkSoft }]}>✕</Text>

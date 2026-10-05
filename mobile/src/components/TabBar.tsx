@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import { useAppTheme } from '../theme/ThemeContext';
 
 export type TabKey = 'timer' | 'calendar' | 'notes' | 'profile';
@@ -39,7 +40,10 @@ export function TabBar({ active, onChange }: TabBarProps) {
             key={tab.key}
             accessibilityRole="button"
             accessibilityState={{ selected: isActive }}
-            onPress={() => onChange(tab.key)}
+            onPress={() => {
+              playSound('click');
+              onChange(tab.key);
+            }}
             style={[
               styles.tab,
               {

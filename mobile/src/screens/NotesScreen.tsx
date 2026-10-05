@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import { Card } from '../components/Card';
 import { TodoRow } from '../components/TodoRow';
 import { useAppData } from '../state/AppDataContext';
@@ -15,6 +16,7 @@ export function NotesScreen() {
   function submit() {
     const text = draft.trim();
     if (text.length === 0) return;
+    playSound('ding');
     addTodo(text);
     setDraft('');
   }

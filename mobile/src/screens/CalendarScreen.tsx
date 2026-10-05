@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { playSound } from '../audio/sounds';
 import { Card } from '../components/Card';
 import {
   WEEKDAY_LABELS,
@@ -57,12 +58,14 @@ export function CalendarScreen() {
   const savedNote = dayNotes[selected] ?? '';
 
   function shiftMonth(delta: number) {
+    playSound('click');
     const next = new Date(year, month + delta, 1);
     setYear(next.getFullYear());
     setMonth(next.getMonth());
   }
 
   function logForSelectedDay(rating: Rating) {
+    playSound('ding');
     const session: Session = {
       date: selected,
       phase: 'focus',
@@ -141,6 +144,7 @@ export function CalendarScreen() {
               <Pressable
                 key={cell.key}
                 onPress={() => {
+                  playSound('tap');
                   setSelected(cell.key);
                 }}
                 style={[
@@ -240,7 +244,10 @@ export function CalendarScreen() {
           </View>
         ) : (
           <Pressable
-            onPress={() => setLogging(true)}
+            onPress={() => {
+              playSound('click');
+              setLogging(true);
+            }}
             style={[
               styles.logButton,
               { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },

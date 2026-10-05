@@ -63,7 +63,7 @@ export function BreakOverlay({ visible, secondsLeft, onEndBreak }: BreakOverlayP
                 <Text style={styles.primaryLabel}>Stop the timer</Text>
               </Pressable>
 
-              <Text style={styles.sub}> or wait until the timer ends on it own.</Text>
+              <Text style={styles.sub}>or wait — the timer ends on its own</Text>
               </>
             )}
 

@@ -1,0 +1,45 @@
+import type { ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+
+import { useAppTheme } from '../theme/ThemeContext';
+
+type CardProps = {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+};
+
+/** The rounded panel everything sits in. Retro swaps soft for blocky. */
+export function Card({ children, style }: CardProps) {
+  const { colors, retro } = useAppTheme();
+
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.line,
+          borderWidth: retro ? 2 : 1,
+          borderRadius: retro ? 2 : 26,
+          padding: 26,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 5,
+  },
+});

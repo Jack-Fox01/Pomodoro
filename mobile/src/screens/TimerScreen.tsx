@@ -1,41 +1,74 @@
-import { useEffect, useRef, useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
 import { BreakOverlay } from '../components/BreakOverlay';
-import { addSession, loadSessions } from '../data/sessions';
+import { Card } from '../components/Card';
+import { Confetti } from '../components/Confetti';
+import { ModePill } from '../components/ModePill';
+import { ProgressRing } from '../components/ProgressRing';
+import { RatingModal } from '../components/RatingModal';
+import { Stepper } from '../components/Stepper';
+import { ToggleSwitch } from '../components/ToggleSwitch';
+import { Toast } from '../components/Toast';
+import { ChallengeGame } from '../components/challenges/ChallengeGame';
 import { todayKey } from '../domain/date';
+import { sessionDates } from '../domain/sessions';
+import { computeStreak } from '../domain/streak';
 import { formatClock } from '../domain/time';
-import type { Phase, Session } from '../domain/types';
+import type { ChallengeType, Phase, Rating, Session } from '../domain/types';
+import { useAppData } from '../state/AppDataContext';
 import { useAppTheme } from '../theme/ThemeContext';
 
-const FOCUS_SECONDS = 10; // 25 * 60
-const BREAK_SECONDS = 15; // 5 * 60
-
-const RING_SIZE = 260;
-const RING_STROKE = 16;
-const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-
 const TICK_MS = 200;
+const RING_SIZE = Math.min(300, Dimensions.get('window').width - 120);
+
+const CHALLENGE_LABELS: { value: ChallengeType; label: string }[] = [
+  { value: 'math', label: 'Maths' },
+  { value: 'tiles', label: 'Tiles' },
+  { value: 'boss', label: 'Boss' },
+  { value: 'random', label: 'Random' },
+];
+
+const PRESETS = [
+  { focus: 25, rest: 5, label: '25 / 5' },
+  { focus: 50, rest: 10, label: '50 / 10' },
+  { focus: 90, rest: 20, label: '90 / 20' },
+];
 
 export function TimerScreen() {
-  const { colors } = useAppTheme();
+  const { colors, retro, dark, toggleDark, toggleRetro } = useAppTheme();
+  const {
+    sessions,
+    addSession,
+    settings,
+    setFocusMinutes,
+    setBreakMinutes,
+    setChallenge,
+  } = useAppData();
+
+  const focusSeconds = settings.focusMinutes * 60;
+  const breakSeconds = settings.breakMinutes * 60;
 
   const [phase, setPhase] = useState<Phase>('focus');
-  const [remaining, setRemaining] = useState(FOCUS_SECONDS);
+  const [remaining, setRemaining] = useState(focusSeconds);
   const [running, setRunning] = useState(false);
-  const [todayCount, setTodayCount] = useState(0);
+  const [breakActive, setBreakActive] = useState(false);
 
-  // Wall-clock deadline (ms since epoch). A ref, not state: it is never rendered.
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [ratingOpen, setRatingOpen] = useState(false);
+
+  const [celebrating, setCelebrating] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Wall-clock deadline. A ref, because it is never rendered.
   const deadlineRef = useRef(0);
+  // What the rating modal is about to log.
+  const pendingRef = useRef<{ seconds: number; skipped: boolean }>({
+    seconds: focusSeconds,
+    skipped: false,
+  });
 
-  // Load today's focus count once, on mount.
-  useEffect(() => {
-    loadSessions().then((all) => {
-      const today = todayKey();
-      setTodayCount(all.filter((s) => s.date === today && s.phase === 'focus').length);
-    });
-  }, []);
+  const streak = useMemo(() => computeStreak(sessionDates(sessions)), [sessions]);
 
   // Tick often, but always RECOMPUTE from the clock — never count ticks.
   useEffect(() => {
@@ -49,28 +82,25 @@ export function TimerScreen() {
     return () => clearInterval(id);
   }, [running]);
 
-  // Zero → record a finished focus run, start the break, or end the break.
+  // Zero → the focus run is over (open the rating), or the break is over.
   useEffect(() => {
     if (remaining > 0) return;
 
     if (phase === 'focus') {
-      const session: Session = {
-        date: todayKey(),
-        phase: 'focus',
-        seconds: FOCUS_SECONDS,
-        completedAt: deadlineRef.current,
-        skipped: false,
-      };
-      addSession(session).then(() => setTodayCount((prev) => prev + 1));
-
+      pendingRef.current = { seconds: focusSeconds, skipped: false };
       setPhase('break');
-      setRemaining(BREAK_SECONDS);
-      deadlineRef.current = Date.now() + BREAK_SECONDS * 1000;
-    } else {
-      setPhase('focus');
-      setRemaining(FOCUS_SECONDS);
+      setRemaining(breakSeconds);
       setRunning(false);
+      setRatingOpen(true);
+    } else {
+      setBreakActive(false);
+      setRunning(false);
+      setPhase('focus');
+      setRemaining(focusSeconds);
     }
+    // focusSeconds / breakSeconds come from the render that changed `remaining`,
+    // so they are already fresh and must not be dependencies here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remaining, phase]);
 
   function toggleRunning() {
@@ -84,98 +114,416 @@ export function TimerScreen() {
 
   function reset() {
     setRunning(false);
+    setBreakActive(false);
     setPhase('focus');
-    setRemaining(FOCUS_SECONDS);
+    setRemaining(focusSeconds);
   }
 
-  /** The user confirmed ending the break early. Log it as skipped, then reset to focus. */
-  function endBreak() {
-    const session: Session = {
-      date: todayKey(),
-      phase: 'break',
-      seconds: BREAK_SECONDS - remaining,
-      completedAt: Date.now(),
-      skipped: true,
-    };
-    addSession(session);
+  function changeFocusMinutes(minutes: number) {
+    setFocusMinutes(minutes);
+    if (!running && phase === 'focus') setRemaining(minutes * 60);
+  }
 
+  function changeBreakMinutes(minutes: number) {
+    setBreakMinutes(minutes);
+    if (!running && phase === 'break') setRemaining(minutes * 60);
+  }
+
+  function applyPreset(focus: number, rest: number) {
+    setFocusMinutes(focus);
+    setBreakMinutes(rest);
+    if (!running) {
+      setPhase('focus');
+      setBreakActive(false);
+      setRemaining(focus * 60);
+    }
+  }
+
+  function startBreak() {
+    deadlineRef.current = Date.now() + breakSeconds * 1000;
+    setBreakActive(true);
+    setRunning(true);
+  }
+
+  /** Break ended early through the overlay's yes/no step. Breaks are not logged. */
+  function endBreak() {
+    setBreakActive(false);
     setRunning(false);
     setPhase('focus');
-    setRemaining(FOCUS_SECONDS);
+    setRemaining(focusSeconds);
   }
 
-  // Derived — not state.
+  function openChallenge() {
+    setRunning(false); // you cannot earn a skip while the clock runs
+    setChallengeOpen(true);
+  }
+
+  function cancelChallenge() {
+    setChallengeOpen(false);
+    setRunning(true);
+  }
+
+  /** Challenge beaten: the focus run counts as skipped. */
+  function finishChallenge() {
+    pendingRef.current = { seconds: focusSeconds - remaining, skipped: true };
+    setChallengeOpen(false);
+    setPhase('break');
+    setRemaining(breakSeconds);
+    setRatingOpen(true);
+  }
+
+  function finishRating(rating: Rating | null) {
+    const pending = pendingRef.current;
+
+    const session: Session = {
+      date: todayKey(),
+      phase: 'focus',
+      seconds: pending.seconds,
+      completedAt: Date.now(),
+      skipped: pending.skipped,
+      rating,
+    };
+
+    const streakBefore = computeStreak(sessionDates(sessions));
+    const streakAfter = computeStreak(sessionDates([...sessions, session]));
+
+    addSession(session);
+    setRatingOpen(false);
+
+    if (streakAfter > streakBefore) {
+      setCelebrating(true);
+      setToast(`🔥 ${streakAfter}-day streak!`);
+    }
+
+    startBreak();
+  }
+
   const display = formatClock(remaining);
-
-  const total = phase === 'focus' ? FOCUS_SECONDS : BREAK_SECONDS;
-  const progress = remaining / total;
-  const dashOffset = RING_CIRCUMFERENCE * (1 - progress);
-
+  const total = phase === 'focus' ? focusSeconds : breakSeconds;
+  const progress = total > 0 ? remaining / total : 0;
   const accent = phase === 'focus' ? colors.focus : colors.breakColor;
 
+  const streakText =
+    streak > 0
+      ? `🔥 ${streak} day streak — keep it going!`
+      : '🌱 No streak yet — log a session today to start one';
+
   return (
-    <View style={styles.container}>
-      <Text style={[styles.phaseLabel, { color: colors.inkSoft }]}>
-        {phase === 'focus' ? 'FOCUS' : 'BREAK'}
-      </Text>
+    <View style={styles.root}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.streak, { color: colors.inkSoft }]}>{streakText}</Text>
 
-      <Text style={[styles.sessionCount, { color: colors.inkSoft }]}>
-        {`Focus today: ${todayCount}`}
-      </Text>
-
-      <View style={styles.ringWrap}>
-        <Svg width={RING_SIZE} height={RING_SIZE}>
-          <Circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke={colors.ringTrack}
-            strokeWidth={RING_STROKE}
-            fill="none"
-          />
-          <Circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={RING_RADIUS}
-            stroke={accent}
-            strokeWidth={RING_STROKE}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={RING_CIRCUMFERENCE}
-            strokeDashoffset={dashOffset}
-            transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-          />
-        </Svg>
-
-        <View style={styles.ringCenter}>
-          <Text style={[styles.time, { color: accent }]}>{display}</Text>
+        <View style={styles.pillRow}>
+          <ModePill label={phase === 'focus' ? '🍅 Focus' : '🌿 Break'} color={accent} />
         </View>
-      </View>
 
-      <View style={styles.buttonRow}>
-        <Button title={running ? 'Pause' : 'Start'} onPress={toggleRunning} />
-        <Button title="Reset" onPress={reset} />
-      </View>
+        <Card>
+          <ProgressRing
+            size={RING_SIZE}
+            strokeWidth={14}
+            progress={progress}
+            color={accent}
+            trackColor={colors.ringTrack}
+          >
+            <Text style={[styles.time, { color: colors.ink }]}>{display}</Text>
+            <Text style={[styles.timeLabel, { color: colors.inkSoft }]}>
+              {phase === 'focus' ? 'Focus session' : 'Rest session'}
+            </Text>
+          </ProgressRing>
 
-      <BreakOverlay
-        visible={phase === 'break'}
-        secondsLeft={remaining}
-        onEndBreak={endBreak}
-      />
+          <View style={styles.controls}>
+            <Pressable
+              onPress={reset}
+              style={[
+                styles.ghost,
+                { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },
+              ]}
+            >
+              <Text style={[styles.ghostLabel, { color: colors.ink }]}>Reset</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={toggleRunning}
+              style={[styles.primary, { backgroundColor: accent, borderRadius: retro ? 2 : 999 }]}
+            >
+              <Text style={styles.primaryLabel}>{running ? 'Pause' : 'Start'}</Text>
+            </Pressable>
+
+            {phase === 'focus' && (
+              <Pressable
+                onPress={openChallenge}
+                style={[
+                  styles.ghost,
+                  { backgroundColor: colors.chipBg, borderRadius: retro ? 2 : 999 },
+                ]}
+              >
+                <Text style={[styles.ghostLabel, { color: colors.ink }]}>Skip</Text>
+              </Pressable>
+            )}
+          </View>
+
+          <View style={styles.settings}>
+            <Stepper
+              label="Focus length"
+              hint="Deep-work session"
+              value={settings.focusMinutes}
+              min={1}
+              max={240}
+              onChange={changeFocusMinutes}
+            />
+
+            <Stepper
+              label="Break length"
+              hint="Rest session"
+              value={settings.breakMinutes}
+              min={1}
+              max={120}
+              onChange={changeBreakMinutes}
+            />
+
+            <View
+              style={[
+                styles.stack,
+                {
+                  backgroundColor: colors.settingBg,
+                  borderColor: colors.line,
+                  borderWidth: retro ? 2 : 1,
+                  borderRadius: retro ? 2 : 16,
+                },
+              ]}
+            >
+              <View style={styles.stackLabels}>
+                <Text style={[styles.settingLabel, { color: colors.ink }]}>Skip challenge</Text>
+                <Text style={[styles.settingHint, { color: colors.inkSoft }]}>
+                  Game to beat when you skip a focus session
+                </Text>
+              </View>
+
+              <View style={styles.challengeRow}>
+                {CHALLENGE_LABELS.map((option) => {
+                  const isActive = settings.challenge === option.value;
+                  return (
+                    <Pressable
+                      key={option.value}
+                      onPress={() => setChallenge(option.value)}
+                      style={[
+                        styles.challengeOption,
+                        {
+                          backgroundColor: isActive ? colors.focusDeep : colors.chipBg,
+                          borderRadius: retro ? 2 : 12,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.challengeLabel,
+                          { color: isActive ? '#ffffff' : colors.inkSoft },
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.stack,
+                {
+                  backgroundColor: colors.settingBg,
+                  borderColor: colors.line,
+                  borderWidth: retro ? 2 : 1,
+                  borderRadius: retro ? 2 : 16,
+                },
+              ]}
+            >
+              <View style={styles.stackLabels}>
+                <Text style={[styles.settingLabel, { color: colors.ink }]}>Appearance</Text>
+                <Text style={[styles.settingHint, { color: colors.inkSoft }]}>
+                  Theme &amp; dark mode
+                </Text>
+              </View>
+
+              <ToggleSwitch label="Dark mode" value={dark} onChange={toggleDark} />
+              <ToggleSwitch label="Retro (32-bit)" value={retro} onChange={toggleRetro} />
+            </View>
+
+            <View style={styles.presets}>
+              {PRESETS.map((preset) => {
+                const isActive =
+                  settings.focusMinutes === preset.focus && settings.breakMinutes === preset.rest;
+                return (
+                  <Pressable
+                    key={preset.label}
+                    onPress={() => applyPreset(preset.focus, preset.rest)}
+                    style={[
+                      styles.preset,
+                      {
+                        backgroundColor: isActive ? colors.focusDeep : colors.chipBg,
+                        borderRadius: retro ? 2 : 999,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.presetLabel, { color: isActive ? '#ffffff' : colors.inkSoft }]}
+                    >
+                      {preset.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </Card>
+
+        <Text style={[styles.note, { color: colors.inkSoft }]}>
+          <Text style={[styles.noteStrong, { color: colors.ink }]}>Skip:</Text> beat a quick game to
+          end a focus session early — it still logs to your history.{' '}
+          <Text style={[styles.noteStrong, { color: colors.ink }]}>Break:</Text> ending early just
+          asks for a yes/no confirmation.
+        </Text>
+      </ScrollView>
+
+      <BreakOverlay visible={breakActive} secondsLeft={remaining} onEndBreak={endBreak} />
+
+      {challengeOpen && (
+        <ChallengeGame
+          type={settings.challenge}
+          onComplete={finishChallenge}
+          onCancel={cancelChallenge}
+        />
+      )}
+
+      {ratingOpen && (
+        <RatingModal
+          title="How did that session go?"
+          onPick={(rating) => finishRating(rating)}
+          onSkip={() => finishRating(null)}
+        />
+      )}
+
+      {celebrating && <Confetti onDone={() => setCelebrating(false)} />}
+      {toast !== null && <Toast message={toast} onHide={() => setToast(null)} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', gap: 24 },
-  phaseLabel: { fontSize: 16, fontWeight: '600', letterSpacing: 4 },
-  sessionCount: { fontSize: 14 },
-  ringWrap: { width: RING_SIZE, height: RING_SIZE },
-  ringCenter: {
-    ...StyleSheet.absoluteFill,
+  root: {
+    flex: 1,
+  },
+  scroll: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 120,
+  },
+  streak: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  pillRow: {
+    alignItems: 'center',
+    marginBottom: 22,
+  },
+  time: {
+    fontSize: 62,
+    fontWeight: '700',
+    lineHeight: 68,
+    letterSpacing: -1,
+    fontVariant: ['tabular-nums'],
+  },
+  timeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+  controls: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 18,
+  },
+  primary: {
+    minWidth: 128,
+    paddingVertical: 15,
+    paddingHorizontal: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  time: { fontSize: 64, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  buttonRow: { flexDirection: 'row', gap: 16 },
+  primaryLabel: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  ghost: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ghostLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  settings: {
+    marginTop: 20,
+    width: '100%',
+    gap: 14,
+  },
+  stack: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  stackLabels: {
+    gap: 2,
+  },
+  settingLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  settingHint: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  challengeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  challengeOption: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  challengeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  presets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  preset: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  presetLabel: {
+    fontSize: 13,
+  },
+  note: {
+    marginTop: 20,
+    textAlign: 'center',
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  noteStrong: {
+    fontWeight: '700',
+  },
 });
